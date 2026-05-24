@@ -1,0 +1,93 @@
+id: "05-tres-portones"
+titulo: "Los Tres Portones del Castillo"
+cuento: |
+  Silvia descubre que el castillo no tiene solo una puerta al mundo: tiene tres
+  portones distintos. El Portón Interior (eth0) da al barrio de los nobles (LAN),
+  donde viven los habitantes de confianza. El Portón de la Barbacana (eth1) da
+  al patio exterior (DMZ), donde están la posada y el taller del herrero,
+  accesibles a visitantes. El Portón Exterior (eth2) da a los reinos lejanos (WAN),
+  donde llegan mensajeros de todo el mundo.
+
+  El Capitán explica que la cadena FORWARD controla el tráfico entre estas zonas.
+  Con política FORWARD DROP, los guardias bloquean cualquier mensajero que intente
+  cruzar de una zona a otra. Silvia debe abrir los portones correctos: los nobles
+  del Torreón (LAN) pueden salir al patio exterior y a los reinos lejanos, pero
+  nadie del exterior puede entrar al Torreón sin permiso explícito.
+mision: "Añade reglas FORWARD para que la LAN pueda llegar a la DMZ y a Internet. Bloquea el tráfico externo hacia la LAN."
+red:
+  firewall_ip: "192.168.1.1"
+  interfaces:
+    - nombre: eth0
+      zona: lan
+      cidr: "192.168.1.0/24"
+      ip: "192.168.1.1"
+    - nombre: eth1
+      zona: dmz
+      cidr: "10.0.0.0/24"
+      ip: "10.0.0.1"
+    - nombre: eth2
+      zona: wan
+      cidr: "0.0.0.0/0"
+      ip: "203.0.113.1"
+  hosts:
+    - nombre: "Casa Local"
+      ip: "192.168.1.10"
+      zona: lan
+      iface: eth0
+    - nombre: "Servidor DMZ"
+      ip: "10.0.0.5"
+      zona: dmz
+      iface: eth1
+    - nombre: "Aldea Lejana"
+      ip: "203.0.113.5"
+      zona: wan
+      iface: eth2
+politicas:
+  INPUT: ACCEPT
+  OUTPUT: ACCEPT
+  FORWARD: DROP
+reglas_iniciales:
+  - "-A FORWARD -m state --state ESTABLISHED,RELATED -j ACCEPT"
+pistas:
+  - "La cadena FORWARD controla el tráfico ENTRE ZONAS, no el que llega al castillo."
+  - "Usa -i eth0 -o eth1 para permitir tráfico que ENTRA por LAN y SALE por DMZ."
+  - "La regla ESTABLISHED ya permite las respuestas de vuelta; solo necesitas las reglas de ida."
+  - "Con política FORWARD DROP, todo queda bloqueado si no hay regla explícita."
+pruebas:
+  - descripcion: "Los nobles llegan al patio exterior (LAN → DMZ)"
+    src_ip: "192.168.1.10"
+    dst_ip: "10.0.0.5"
+    dst_port: 80
+    proto: tcp
+    estado: NEW
+    in_iface: eth0
+    out_iface: eth1
+    esperado: ACCEPT
+  - descripcion: "Los nobles salen a los reinos lejanos (LAN → WAN)"
+    src_ip: "192.168.1.10"
+    dst_ip: "203.0.113.5"
+    dst_port: 80
+    proto: tcp
+    estado: NEW
+    in_iface: eth0
+    out_iface: eth2
+    esperado: ACCEPT
+  - descripcion: "Forasteros bloqueados en el Torreón (WAN → LAN)"
+    src_ip: "203.0.113.5"
+    dst_ip: "192.168.1.10"
+    dst_port: 80
+    proto: tcp
+    estado: NEW
+    in_iface: eth2
+    out_iface: eth0
+    esperado: DROP
+  - descripcion: "El patio no puede entrar al Torreón (DMZ → LAN)"
+    src_ip: "10.0.0.5"
+    dst_ip: "192.168.1.10"
+    dst_port: 80
+    proto: tcp
+    estado: NEW
+    in_iface: eth1
+    out_iface: eth0
+    esperado: DROP
+recompensa: "¡Dominas la cadena FORWARD! Los nobles pueden moverse libremente, pero el Torreón permanece protegido."

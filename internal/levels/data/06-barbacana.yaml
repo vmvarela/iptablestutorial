@@ -1,0 +1,94 @@
+id: "06-barbacana"
+titulo: "La Barbacana Abierta"
+cuento: |
+  El Capitán convoca a Silvia al patio exterior. En la Barbacana hay una posada
+  y un taller de pergaminos (el servidor web de la DMZ). Los viajeros de los reinos
+  lejanos quieren consultar los pergaminos, pero no pueden entrar al Torreón.
+
+  La misión de Silvia es abrir el portón de la Barbacana solo para mensajeros que
+  traigan cartas de comercio (HTTP, puerto 80). Los mensajeros que lleguen con
+  otras intenciones -espías con llaves maestras (SSH, puerto 22)- serán rechazados
+  en la puerta. Y el Torreón interior (LAN) sigue completamente cerrado a forasteros.
+
+  Los guardias de la Barbacana ya conocen la regla: si tienes una carta de respuesta
+  a una petición ya conocida (ESTABLISHED), puedes pasar. Solo hay que añadir la
+  regla para los mensajeros nuevos que vienen del mundo exterior a consultar pergaminos.
+mision: "Permite que Internet llegue al servidor DMZ solo por HTTP (puerto 80). Protege la LAN."
+red:
+  firewall_ip: "192.168.1.1"
+  interfaces:
+    - nombre: eth0
+      zona: lan
+      cidr: "192.168.1.0/24"
+      ip: "192.168.1.1"
+    - nombre: eth1
+      zona: dmz
+      cidr: "10.0.0.0/24"
+      ip: "10.0.0.1"
+    - nombre: eth2
+      zona: wan
+      cidr: "0.0.0.0/0"
+      ip: "203.0.113.1"
+  hosts:
+    - nombre: "Casa Local"
+      ip: "192.168.1.10"
+      zona: lan
+      iface: eth0
+    - nombre: "Servidor DMZ"
+      ip: "10.0.0.5"
+      zona: dmz
+      iface: eth1
+    - nombre: "Aldea Lejana"
+      ip: "203.0.113.5"
+      zona: wan
+      iface: eth2
+politicas:
+  INPUT: ACCEPT
+  OUTPUT: ACCEPT
+  FORWARD: DROP
+reglas_iniciales:
+  - "-A FORWARD -m state --state ESTABLISHED,RELATED -j ACCEPT"
+  - "-A FORWARD -i eth0 -o eth2 -j ACCEPT"
+pistas:
+  - "Usa -i eth2 -o eth1 para tráfico que entra desde WAN y sale hacia la DMZ."
+  - "Añade -p tcp --dport 80 para abrir solo HTTP, no SSH ni otros protocolos."
+  - "La LAN (eth0) no necesita regla nueva: ya puede salir al exterior con la regla inicial."
+  - "La regla ESTABLISHED del inicio ya permite las respuestas HTTP de vuelta."
+pruebas:
+  - descripcion: "Viajeros consultan pergaminos en la Barbacana (WAN → DMZ HTTP)"
+    src_ip: "203.0.113.5"
+    dst_ip: "10.0.0.5"
+    dst_port: 80
+    proto: tcp
+    estado: NEW
+    in_iface: eth2
+    out_iface: eth1
+    esperado: ACCEPT
+  - descripcion: "Espías bloqueados en la Barbacana (WAN → DMZ SSH)"
+    src_ip: "203.0.113.5"
+    dst_ip: "10.0.0.5"
+    dst_port: 22
+    proto: tcp
+    estado: NEW
+    in_iface: eth2
+    out_iface: eth1
+    esperado: DROP
+  - descripcion: "Forasteros bloqueados en el Torreón (WAN → LAN)"
+    src_ip: "203.0.113.5"
+    dst_ip: "192.168.1.10"
+    dst_port: 80
+    proto: tcp
+    estado: NEW
+    in_iface: eth2
+    out_iface: eth0
+    esperado: DROP
+  - descripcion: "Los nobles siguen pudiendo salir (LAN → WAN)"
+    src_ip: "192.168.1.10"
+    dst_ip: "203.0.113.5"
+    dst_port: 443
+    proto: tcp
+    estado: NEW
+    in_iface: eth0
+    out_iface: eth2
+    esperado: ACCEPT
+recompensa: "¡La Barbacana está lista! Los viajeros pueden consultar pergaminos, pero el Torreón sigue inexpugnable."

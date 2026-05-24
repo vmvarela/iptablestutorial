@@ -1,0 +1,61 @@
+id: "03-bloquear-tipo"
+titulo: "Guardias Expertos en Protocolos"
+cuento: |
+  Silvia aprende que los mensajeros llevan diferentes "tipos de carta": TCP
+  (cartas normales), UDP (palomas) e ICMP (pings de señal). El castillo
+  necesita bloquear todas las palomas UDP de un reino hostil específico
+  (10.0.0.0/8).
+mision: "Bloquea todos los mensajeros UDP del reino hostil (10.0.0.0/8) y permite el resto."
+red:
+  firewall_ip: "192.168.1.1"
+  interfaces:
+    - nombre: eth0
+      zona: barrio
+      cidr: "192.168.1.0/24"
+    - nombre: eth1
+      zona: mundo
+      cidr: "0.0.0.0/0"
+  hosts:
+    - nombre: "Villa Local"
+      ip: "192.168.1.10"
+      zona: barrio
+      iface: eth0
+    - nombre: "Reino Hostil"
+      ip: "10.1.2.3"
+      zona: mundo
+      iface: eth1
+    - nombre: "Reino Amigo"
+      ip: "203.0.113.5"
+      zona: mundo
+      iface: eth1
+politicas:
+  INPUT: ACCEPT
+  OUTPUT: ACCEPT
+  FORWARD: ACCEPT
+reglas_iniciales: []
+pistas:
+  - "Combina -s con -p para ser más preciso."
+  - "¿Qué pasa si solo bloqueas por IP?"
+pruebas:
+  - descripcion: "Paloma UDP desde el reino hostil"
+    src_ip: "10.1.2.3"
+    dst_ip: "192.168.1.1"
+    dst_port: 53
+    proto: udp
+    estado: NEW
+    esperado: DROP
+  - descripcion: "Carta TCP desde el reino hostil"
+    src_ip: "10.1.2.3"
+    dst_ip: "192.168.1.1"
+    dst_port: 80
+    proto: tcp
+    estado: NEW
+    esperado: ACCEPT
+  - descripcion: "Paloma UDP desde el reino amigo"
+    src_ip: "203.0.113.5"
+    dst_ip: "192.168.1.1"
+    dst_port: 53
+    proto: udp
+    estado: NEW
+    esperado: ACCEPT
+recompensa: "¡Brillante! Ahora sabes combinar criterios de tipo y origen."

@@ -1,0 +1,59 @@
+id: "04-politica-drop"
+titulo: "El Castillo Seguro: Solo los Conocidos"
+cuento: |
+  El Capitán explica el gran secreto del castillo seguro: cambiar la política
+  a DROP (nadie entra por defecto) y luego añadir excepciones para los
+  mensajeros de confianza. También hay que dejar pasar las respuestas de
+  conexiones que el castillo inició (ESTABLISHED,RELATED).
+mision: "Pon la política DROP en INPUT y añade reglas para permitir SSH (tcp:22) y conexiones ya establecidas."
+red:
+  firewall_ip: "192.168.1.1"
+  interfaces:
+    - nombre: eth0
+      zona: barrio
+      cidr: "192.168.1.0/24"
+    - nombre: eth1
+      zona: mundo
+      cidr: "0.0.0.0/0"
+  hosts:
+    - nombre: "Villa Local"
+      ip: "192.168.1.10"
+      zona: barrio
+      iface: eth0
+    - nombre: "Reino Lejano"
+      ip: "203.0.113.5"
+      zona: mundo
+      iface: eth1
+politicas:
+  INPUT: DROP
+  OUTPUT: ACCEPT
+  FORWARD: ACCEPT
+reglas_iniciales:
+  - "-A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT"
+pistas:
+  - "Con política DROP todo se bloquea por defecto."
+  - "ESTABLISHED permite las respuestas que tú mismo pediste."
+  - "Añade -A INPUT -p tcp --dport 22 -j ACCEPT para SSH."
+pruebas:
+  - descripcion: "SSH desde el mundo"
+    src_ip: "203.0.113.5"
+    dst_ip: "192.168.1.1"
+    dst_port: 22
+    proto: tcp
+    estado: NEW
+    esperado: ACCEPT
+  - descripcion: "HTTP desde el mundo sin regla"
+    src_ip: "203.0.113.5"
+    dst_ip: "192.168.1.1"
+    dst_port: 80
+    proto: tcp
+    estado: NEW
+    esperado: DROP
+  - descripcion: "Respuesta ESTABLISHED desde el mundo"
+    src_ip: "203.0.113.5"
+    dst_ip: "192.168.1.1"
+    dst_port: 80
+    proto: tcp
+    estado: ESTABLISHED
+    esperado: ACCEPT
+recompensa: "¡Eres una experta en política DROP! El castillo ahora solo admite a los conocidos y las respuestas propias."

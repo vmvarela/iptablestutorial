@@ -1,0 +1,19 @@
+# Binaries
+bin/
+dist/
+
+# Test output
+coverage.out
+coverage.html
+
+# macOS
+.DS_Store
+
+# Editor
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# GoReleaser
+dist/

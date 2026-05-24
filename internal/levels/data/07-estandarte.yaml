@@ -1,0 +1,87 @@
+id: "07-estandarte"
+titulo: "El Estandarte del Castillo"
+cuento: |
+  Los nobles del Torreón quieren enviar mensajeros a los reinos lejanos, pero
+  hay un problema: los mensajeros llevan el nombre de cada noble en su carta de
+  presentación. Cuando el noble pide una respuesta, el mensajero lejano necesita
+  saber a quién contestar. Pero los nobles viven en un barrio secreto (192.168.1.x)
+  que los reinos lejanos no conocen ni pueden alcanzar directamente.
+
+  El Capitán revela el secreto del Estandarte del Castillo (MASQUERADE): todos
+  los mensajeros que salen del Torreón hacia los reinos lejanos deben vestir el
+  estandarte del castillo (la IP pública 203.0.113.1), no su nombre propio.
+  Así, las respuestas llegan al castillo, y el castillo las reenvía al noble correcto.
+
+  Sin el Estandarte, los mensajeros salen pero las respuestas se pierden en el camino,
+  porque los reinos lejanos no saben cómo volver al barrio secreto. Son necesarias
+  DOS reglas: una de FORWARD que abra el paso, y una de MASQUERADE en la cadena
+  POSTROUTING de la tabla nat que ponga el Estandarte en las cartas.
+mision: "Permite que la LAN acceda a Internet. Añade FORWARD para eth0→eth2 y MASQUERADE en POSTROUTING."
+red:
+  firewall_ip: "192.168.1.1"
+  interfaces:
+    - nombre: eth0
+      zona: lan
+      cidr: "192.168.1.0/24"
+      ip: "192.168.1.1"
+    - nombre: eth1
+      zona: dmz
+      cidr: "10.0.0.0/24"
+      ip: "10.0.0.1"
+    - nombre: eth2
+      zona: wan
+      cidr: "0.0.0.0/0"
+      ip: "203.0.113.1"
+  hosts:
+    - nombre: "Casa Local"
+      ip: "192.168.1.10"
+      zona: lan
+      iface: eth0
+    - nombre: "Servidor DMZ"
+      ip: "10.0.0.5"
+      zona: dmz
+      iface: eth1
+    - nombre: "Aldea Lejana"
+      ip: "203.0.113.5"
+      zona: wan
+      iface: eth2
+politicas:
+  INPUT: ACCEPT
+  OUTPUT: ACCEPT
+  FORWARD: DROP
+reglas_iniciales:
+  - "-A FORWARD -m state --state ESTABLISHED,RELATED -j ACCEPT"
+pistas:
+  - "Necesitas DOS reglas: FORWARD para dejar pasar y MASQUERADE para el estandarte."
+  - "Añade -A FORWARD -i eth0 -o eth2 -j ACCEPT para abrir el paso LAN→WAN."
+  - "Añade -t nat -A POSTROUTING -o eth2 -j MASQUERADE para poner el estandarte."
+  - "Sin MASQUERADE los mensajeros salen pero las respuestas nunca vuelven."
+pruebas:
+  - descripcion: "Nobles envían mensajeros con el Estandarte (LAN → WAN HTTP)"
+    src_ip: "192.168.1.10"
+    dst_ip: "203.0.113.5"
+    dst_port: 80
+    proto: tcp
+    estado: NEW
+    in_iface: eth0
+    out_iface: eth2
+    esperado: ACCEPT
+  - descripcion: "Nobles usan el comercio seguro (LAN → WAN HTTPS)"
+    src_ip: "192.168.1.10"
+    dst_ip: "203.0.113.5"
+    dst_port: 443
+    proto: tcp
+    estado: NEW
+    in_iface: eth0
+    out_iface: eth2
+    esperado: ACCEPT
+  - descripcion: "Forasteros siguen sin poder entrar al Torreón (WAN → LAN)"
+    src_ip: "203.0.113.5"
+    dst_ip: "192.168.1.10"
+    dst_port: 80
+    proto: tcp
+    estado: NEW
+    in_iface: eth2
+    out_iface: eth0
+    esperado: DROP
+recompensa: "¡El Estandarte ondea! Los nobles viajan libremente por los reinos con la identidad del castillo como salvoconducto."

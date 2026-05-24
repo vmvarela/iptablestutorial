@@ -1,0 +1,50 @@
+id: "01-observar"
+titulo: "El Primer Día en el Castillo"
+cuento: |
+  Silvia llega al castillo. No hay guardias todavía. Los mensajeros llegan
+  libremente desde todos los reinos. Su misión: simplemente observar cómo
+  llegan y quién les atiende.
+mision: "Envía mensajeros desde distintos reinos y observa cómo cruzan el castillo sin guardias."
+red:
+  firewall_ip: "192.168.1.1"
+  interfaces:
+    - nombre: eth0
+      zona: barrio
+      cidr: "192.168.1.0/24"
+    - nombre: eth1
+      zona: mundo
+      cidr: "0.0.0.0/0"
+  hosts:
+    - nombre: "Villa Local"
+      ip: "192.168.1.10"
+      zona: barrio
+      iface: eth0
+    - nombre: "Reino Lejano"
+      ip: "203.0.113.5"
+      zona: mundo
+      iface: eth1
+politicas:
+  INPUT: ACCEPT
+  OUTPUT: ACCEPT
+  FORWARD: ACCEPT
+reglas_iniciales: []
+pistas:
+  - "Escribe 'enviar mensajero' en la consola y pulsa Enter (o usa Ctrl+E)."
+  - "Fíjate en el panel Traza del Mensajero — ¿qué veredicto aparece sin reglas?"
+  - "Envía los dos mensajeros para completar el nivel."
+pruebas:
+  - descripcion: "Mensajero TCP desde el barrio"
+    src_ip: "192.168.1.10"
+    dst_ip: "192.168.1.1"
+    dst_port: 80
+    proto: tcp
+    estado: NEW
+    esperado: ACCEPT
+  - descripcion: "Mensajero UDP desde el mundo"
+    src_ip: "203.0.113.5"
+    dst_ip: "192.168.1.1"
+    dst_port: 53
+    proto: udp
+    estado: NEW
+    esperado: ACCEPT
+recompensa: "¡Has visto cómo funciona el castillo sin guardias! Ahora aprenderás a añadir el primer guardia."

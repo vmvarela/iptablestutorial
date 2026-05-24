@@ -1,0 +1,49 @@
+id: "02-primer-guardia"
+titulo: "El Primer Guardia en la Puerta"
+cuento: |
+  El Capitán le dice a Silvia que han detectado mensajeros sospechosos que
+  llevan cartas al puerto 666 (fantasmas). Hay que poner un guardia que los
+  detenga. La regla mágica es: -A INPUT -p udp --dport 666 -j DROP
+mision: "Bloquea los mensajeros fantasma (UDP puerto 666) usando tu primer guardia."
+red:
+  firewall_ip: "192.168.1.1"
+  interfaces:
+    - nombre: eth0
+      zona: barrio
+      cidr: "192.168.1.0/24"
+    - nombre: eth1
+      zona: mundo
+      cidr: "0.0.0.0/0"
+  hosts:
+    - nombre: "Villa Local"
+      ip: "192.168.1.10"
+      zona: barrio
+      iface: eth0
+    - nombre: "Reino Lejano"
+      ip: "203.0.113.5"
+      zona: mundo
+      iface: eth1
+politicas:
+  INPUT: ACCEPT
+  OUTPUT: ACCEPT
+  FORWARD: ACCEPT
+reglas_iniciales: []
+pistas:
+  - "Usa el comando iptables con -A INPUT para añadir un guardia."
+  - "Los fantasmas viajan en barco UDP."
+pruebas:
+  - descripcion: "Fantasma UDP puerto 666 desde el mundo"
+    src_ip: "203.0.113.5"
+    dst_ip: "192.168.1.1"
+    dst_port: 666
+    proto: udp
+    estado: NEW
+    esperado: DROP
+  - descripcion: "Mensajero TCP puerto 80 desde el mundo"
+    src_ip: "203.0.113.5"
+    dst_ip: "192.168.1.1"
+    dst_port: 80
+    proto: tcp
+    estado: NEW
+    esperado: ACCEPT
+recompensa: "¡Excelente! Has añadido tu primer guardia. El castillo ahora bloquea a los fantasmas."

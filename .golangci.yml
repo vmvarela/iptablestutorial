@@ -1,0 +1,50 @@
+version: "2"
+
+run:
+  timeout: 5m
+
+linters:
+  enable:
+    - errcheck
+    - govet
+    - staticcheck
+    - ineffassign
+    - unused
+    - revive
+    - gocritic
+    - nilerr
+    - errorlint
+    - unconvert
+    - gocyclo
+    - funlen
+    - gosec
+
+  settings:
+    gocyclo:
+      min-complexity: 15
+    funlen:
+      lines: 120
+      statements: 60
+    revive:
+      rules:
+        - name: exported
+        - name: var-naming
+        - name: package-comments
+    gocritic:
+      enabled-tags:
+        - diagnostic
+        - style
+      disabled-checks:
+        - unnamedResult
+
+issues:
+  exclude-rules:
+    - path: _test\.go
+      linters:
+        - funlen
+        - gosec
+        - gocyclo
+    - path: internal/ui
+      linters:
+        - funlen
+        - gocyclo
