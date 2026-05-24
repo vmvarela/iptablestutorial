@@ -55,8 +55,11 @@ jobs:
     needs: [test, lint]
     strategy:
       matrix:
-        goos: [linux, darwin]
+        goos: [linux, darwin, windows]
         goarch: [amd64, arm64]
+        exclude:
+          - goos: windows
+            goarch: arm64
     steps:
       - uses: actions/checkout@v6.0.2
 
@@ -66,11 +69,14 @@ jobs:
           cache: true
 
       - name: Build
+        shell: bash
         env:
           GOOS: ${{ matrix.goos }}
           GOARCH: ${{ matrix.goarch }}
         run: |
+          EXT=""
+          [ "${{ matrix.goos }}" = "windows" ] && EXT=".exe"
           go build \
             -ldflags="-s -w -X github.com/vmvarela/iptablestutorial/internal/version.Version=${GITHUB_SHA::8}" \
-            -o bin/silvia-castillo-${{ matrix.goos }}-${{ matrix.goarch }} \
+            -o bin/silvia-castillo-${{ matrix.goos }}-${{ matrix.goarch }}${EXT} \
             ./cmd/silvia-castillo
